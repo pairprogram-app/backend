@@ -22,5 +22,5 @@ function startServer(app) {
   });
 
   server.listen(process.env.PORT || 8080);
-  console.log('Listening on http://localhost:8080');
+  console.log('Listening on', process.env.PORT);
 }
