@@ -10,20 +10,37 @@ const namer = new AnimalNamer();
 const backend = new ShareDB();
 
 const app = express()
+const sockets = {}
 const names = {}
 startServer(app)
 
 const addName = async (wsId) => {
-  names[wsId] = await namer.name()
-  console.log('added name: ', names[wsId])
+  const name = await namer.name()
+  names[wsId] = name
+  console.log('added name: ', name)
+
+  // notify user of their new username
+  sockets[wsId].send({
+    username: name
+  })
 
   // send message to all clients that user joined
+  Object.values(sockets).forEach(ws => ws.send({
+    joined: name,
+    names: Object.values(names)
+  }))
 }
 
 const removeName = async (wsId) => {
-  console.log('removing name: ', names[wsId])
+  const name = names[wsId]
+  console.log('removing name: ', name)
   delete names[wsId]
+
   // send message to all clients that user joined
+  Object.values(sockets).forEach(ws => ws.send({
+    left: name,
+    names: Object.values(names)
+  }))
 }
 
 function startServer(app) {
@@ -33,15 +50,17 @@ function startServer(app) {
 
   // Connect any incoming WebSocket connection to ShareDB
   const wss = new WebSocket.Server({server: server});
-  wss.on('connection', function(ws) {
+  wss.on('connection', async function(ws) {
     const stream = new WebSocketJSONStream(ws);
     ws.id = nanoid()
-    addName(ws.id)
+    sockets[ws.id] = stream
+    await addName(ws.id)
 
     console.log("new stream connected: ", ws.id)
 
-    stream.on('close', () => {
-      removeName(stream.ws.id)
+    stream.on('close', async () => {
+      await removeName(stream.ws.id)
+      delete sockets[stream.ws.id]
     })
 
     backend.listen(stream);
