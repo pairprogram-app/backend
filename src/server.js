@@ -14,6 +14,12 @@ const sockets = {}
 const names = {}
 startServer(app)
 
+const sendNamesList = () => {
+  Object.values(sockets).forEach(ws => ws.send({
+    names: Object.values(names)
+  }))
+}
+
 const addName = async (wsId) => {
   const name = await namer.name()
   names[wsId] = name
@@ -25,10 +31,7 @@ const addName = async (wsId) => {
   })
 
   // send message to all clients that user joined
-  Object.values(sockets).forEach(ws => ws.send({
-    joined: name,
-    names: Object.values(names)
-  }))
+  sendNamesList()
 }
 
 const removeName = async (wsId) => {
@@ -37,10 +40,7 @@ const removeName = async (wsId) => {
   delete names[wsId]
 
   // send message to all clients that user joined
-  Object.values(sockets).forEach(ws => ws.send({
-    left: name,
-    names: Object.values(names)
-  }))
+  sendNamesList()
 }
 
 function startServer(app) {
