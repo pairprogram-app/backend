@@ -28,7 +28,7 @@ const addName = async (wsId) => {
   console.log("added name: ", name);
 
   // notify user of their new username
-  sockets[wsId].send({
+  sockets[wsId].ws.send({
     username: name,
   });
 
