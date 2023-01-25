@@ -15,8 +15,8 @@ const names = {};
 startServer(app);
 
 const sendNamesList = () => {
-  Object.values(sockets).forEach((ws) =>
-    ws.send({
+  Object.values(sockets).forEach((stream) =>
+    stream.write({
       names: Object.values(names),
     })
   );
@@ -28,7 +28,7 @@ const addName = async (wsId) => {
   console.log("added name: ", name);
 
   // notify user of their new username
-  sockets[wsId].ws.send({
+  sockets[wsId].write({
     username: name,
   });
 
